@@ -51,6 +51,28 @@ public partial class Login : ComponentBase
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        try
+        {
+            if (_translations.Count == 0)
+            {
+                _currentLanguage = await L.GetCurrentLanguageAsync();
+                await LoadTranslationsAsync();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[登录] 首次渲染后刷新本地化失败: {ex.Message}");
+        }
+    }
+
     private async Task HandleLogin()
     {
         _errorMessage = string.Empty;
