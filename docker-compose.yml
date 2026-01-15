@@ -42,11 +42,11 @@ services:
       
     volumes:
       # 数据持久化（必需）
-      - webcodecli-data:/app/data
+      - ./webcodecli-data:/app/data
       # 工作区持久化（自动挂载，无需手动配置）
-      - webcodecli-workspaces:/app/workspaces
+      - ./webcodecli-workspaces:/app/workspaces
       # 日志持久化
-      - webcodecli-logs:/app/logs
+      - ./webcodecli-logs:/app/logs
     
     # 资源限制
     deploy:
