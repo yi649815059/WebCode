@@ -158,5 +158,5 @@ echo ""
 echo "Starting WebCodeCli application as appuser..."
 echo "============================================"
 
-# 使用 gosu 切换到 appuser 用户执行命令
-exec gosu appuser "$@"
+# 使用 su-exec 切换到 appuser 用户执行命令
+exec su-exec appuser "$@"
