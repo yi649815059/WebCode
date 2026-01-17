@@ -25,14 +25,19 @@ namespace WebCodeCli.Domain.Domain.Service.Adapters;
 /// 
 /// 配置说明:
 /// - Command: "opencode"
-/// - ArgumentTemplate: 留空或随意填写（适配器不使用此配置）
-/// - 适配器会自动构建完整的命令格式
-/// 
-/// 注意: 与 ClaudeCodeAdapter 类似，此适配器完全控制命令格式，
-///       忽略 ArgumentTemplate 配置以确保与官方 CLI 规范一致。
+/// - ArgumentTemplate: 可选，为空时使用默认模板
+/// - 支持通过环境变量覆盖 ArgumentTemplate
 /// </summary>
 public class OpenCodeAdapter : ICliToolAdapter
 {
+    /// <summary>
+    /// 默认参数模板
+    /// 支持的占位符:
+    /// - {prompt}: 用户提示词
+    /// - {session}: 会话恢复参数（如果有，格式为 "--session id" 或 "--continue"）
+    /// </summary>
+    public const string DefaultArgumentTemplate = "run {session} \"{prompt}\" --format json";
+
     public string[] SupportedToolIds => new[] { "opencode", "opencode-cli" };
 
     public bool SupportsStreamParsing => true;
@@ -50,42 +55,41 @@ public class OpenCodeAdapter : ICliToolAdapter
     {
         var escapedPrompt = EscapeShellArgument(prompt);
 
-        // OpenCode CLI 命令格式 (根据官方文档):
-        // opencode run [message..] [options]
-        // 
+        // 获取参数模板：优先使用配置的 ArgumentTemplate，为空则使用默认值
         // 模型配置说明:
         // OpenCode 通过以下方式配置模型 (优先级从高到低):
         // 1. OPENCODE_CONFIG_CONTENT 环境变量 (JSON 配置)
         // 2. 命令行参数 --model <provider/model>
         // 3. 项目配置文件 opencode.json
         // 4. 全局配置文件 ~/.config/opencode/opencode.json
-        // 
-        // 推荐在环境变量配置中设置:
-        // - OPENCODE_CONFIG_CONTENT: {"model":"anthropic/claude-sonnet-4-5"}
-        // - 或各提供商的 API Key 环境变量
+        var template = !string.IsNullOrWhiteSpace(tool.ArgumentTemplate) 
+            ? tool.ArgumentTemplate 
+            : DefaultArgumentTemplate;
 
-        var sb = new StringBuilder();
-        sb.Append("run");
-
-        // 添加会话恢复参数
+        // 构建会话恢复参数
+        var sessionArg = string.Empty;
         if (context.IsResume && !string.IsNullOrEmpty(context.CliThreadId))
         {
-            // 使用 --session 恢复指定会话
-            sb.Append($" --session {context.CliThreadId}");
+            sessionArg = $"--session {context.CliThreadId}";
         }
         else if (context.IsResume)
         {
-            // 使用 --continue 继续上一个会话
-            sb.Append(" --continue");
+            sessionArg = "--continue";
         }
 
-        // 添加提示词 (作为位置参数)
-        sb.Append($" \"{escapedPrompt}\"");
+        // 替换模板占位符
+        var result = template
+            .Replace("{prompt}", escapedPrompt)
+            .Replace("{session}", sessionArg)
+            .Trim();
 
-        // 添加 JSON 格式输出
-        sb.Append(" --format json");
+        // 清理多余空格
+        while (result.Contains("  "))
+        {
+            result = result.Replace("  ", " ");
+        }
 
-        return sb.ToString();
+        return result;
     }
 
     public CliOutputEvent? ParseOutputLine(string line)

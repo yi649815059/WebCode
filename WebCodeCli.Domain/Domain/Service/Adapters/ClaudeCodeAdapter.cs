@@ -16,6 +16,14 @@ namespace WebCodeCli.Domain.Domain.Service.Adapters;
 /// </summary>
 public class ClaudeCodeAdapter : ICliToolAdapter
 {
+    /// <summary>
+    /// 默认参数模板
+    /// 支持的占位符:
+    /// - {prompt}: 用户提示词
+    /// - {session}: 会话恢复参数（如果有）
+    /// </summary>
+    public const string DefaultArgumentTemplate = "-p --verbose --output-format=stream-json --dangerously-skip-permissions {session} \"{prompt}\"";
+
     public string[] SupportedToolIds => new[] { "claude-code", "claude" };
 
     public bool SupportsStreamParsing => true;
@@ -33,26 +41,32 @@ public class ClaudeCodeAdapter : ICliToolAdapter
     public string BuildArguments(CliToolConfig tool, string prompt, CliSessionContext context)
     {
         var escapedPrompt = EscapeShellArgument(prompt);
-        var argsBuilder = new StringBuilder();
+        
+        // 获取参数模板：优先使用配置的 ArgumentTemplate，为空则使用默认值
+        var template = !string.IsNullOrWhiteSpace(tool.ArgumentTemplate) 
+            ? tool.ArgumentTemplate 
+            : DefaultArgumentTemplate;
 
-        // 基础参数: print模式 + verbose（stream-json在--print模式下需要） + 流式JSON输出
-        argsBuilder.Append("-p ");
-        argsBuilder.Append("--verbose ");
-        argsBuilder.Append("--output-format=stream-json ");
-
-        // 跳过权限提示（非交互模式必需）
-        argsBuilder.Append("--dangerously-skip-permissions ");
-
-        // 会话恢复参数
+        // 构建会话恢复参数
+        var sessionArg = string.Empty;
         if (context.IsResume && !string.IsNullOrEmpty(context.CliThreadId))
         {
-            argsBuilder.Append($"--resume {context.CliThreadId} ");
+            sessionArg = $"--resume {context.CliThreadId}";
         }
 
-        // 用户提示
-        argsBuilder.Append($"\"{escapedPrompt}\"");
+        // 替换模板占位符
+        var result = template
+            .Replace("{prompt}", escapedPrompt)
+            .Replace("{session}", sessionArg)
+            .Trim();
 
-        return argsBuilder.ToString();
+        // 清理多余空格
+        while (result.Contains("  "))
+        {
+            result = result.Replace("  ", " ");
+        }
+
+        return result;
     }
 
     public CliOutputEvent? ParseOutputLine(string line)

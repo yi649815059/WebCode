@@ -10,6 +10,14 @@ namespace WebCodeCli.Domain.Domain.Service.Adapters;
 /// </summary>
 public class CodexAdapter : ICliToolAdapter
 {
+    /// <summary>
+    /// 默认参数模板
+    /// 支持的占位符:
+    /// - {prompt}: 用户提示词
+    /// - {session}: 会话恢复参数（如果有，格式为 "resume session_id"）
+    /// </summary>
+    public const string DefaultArgumentTemplate = "exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox --json {session} \"{prompt}\"";
+
     public string[] SupportedToolIds => new[] { "codex" };
 
     public bool SupportsStreamParsing => true;
@@ -26,39 +34,31 @@ public class CodexAdapter : ICliToolAdapter
     {
         var escapedPrompt = EscapeJsonString(prompt);
 
-        // Codex 的 resume 需要将 `resume <session_id> <prompt>` 作为独立参数传递，
-        // 因此配置中不应把 {prompt} 包在一整个引号里；这里做兼容处理。
-        var template = tool.ArgumentTemplate ?? string.Empty;
-        var resumeCompatibleTemplate = template.Replace("\"{prompt}\"", "{prompt}");
+        // 获取参数模板：优先使用配置的 ArgumentTemplate，为空则使用默认值
+        var template = !string.IsNullOrWhiteSpace(tool.ArgumentTemplate) 
+            ? tool.ArgumentTemplate 
+            : DefaultArgumentTemplate;
 
+        // 构建会话恢复参数
+        var sessionArg = string.Empty;
         if (context.IsResume && !string.IsNullOrEmpty(context.CliThreadId))
         {
-            // 恢复会话模式（正确语法：codex exec ... resume <session_id> "<prompt>"）
-            // 复用配置模板，以确保包含 --skip-git-repo-check 等必需标志。
-            if (string.IsNullOrWhiteSpace(resumeCompatibleTemplate) || !resumeCompatibleTemplate.Contains("{prompt}", StringComparison.Ordinal))
-            {
-                // 兜底：如果模板异常，至少保证包含 skip-git-repo-check
-                return $"exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox --json resume {context.CliThreadId} \"{escapedPrompt}\"";
-            }
-
-            return resumeCompatibleTemplate.Replace("{prompt}", $"resume {context.CliThreadId} \"{escapedPrompt}\"");
+            sessionArg = $"resume {context.CliThreadId}";
         }
-        else
+
+        // 替换模板占位符
+        var result = template
+            .Replace("{prompt}", escapedPrompt)
+            .Replace("{session}", sessionArg)
+            .Trim();
+
+        // 清理多余空格
+        while (result.Contains("  "))
         {
-            // 首次请求，使用配置的参数模板
-            if (string.IsNullOrWhiteSpace(template) || !template.Contains("{prompt}", StringComparison.Ordinal))
-            {
-                return $"exec --skip-git-repo-check --dangerously-bypass-approvals-and-sandbox --json \"{escapedPrompt}\"";
-            }
-
-            // 若模板已包含 "{prompt}"，则不再额外加引号。
-            if (template.Contains("\"{prompt}\"", StringComparison.Ordinal))
-            {
-                return template.Replace("{prompt}", escapedPrompt);
-            }
-
-            return template.Replace("{prompt}", $"\"{escapedPrompt}\"");
+            result = result.Replace("  ", " ");
         }
+
+        return result;
     }
 
     public CliOutputEvent? ParseOutputLine(string line)
