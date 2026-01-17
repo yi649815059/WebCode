@@ -52,13 +52,20 @@ public class OpenCodeAdapter : ICliToolAdapter
 
         // OpenCode CLI 命令格式 (根据官方文档):
         // opencode run [message..] [options]
+        // 
+        // 模型配置说明:
+        // OpenCode 通过以下方式配置模型 (优先级从高到低):
+        // 1. OPENCODE_CONFIG_CONTENT 环境变量 (JSON 配置)
+        // 2. 命令行参数 --model <provider/model>
+        // 3. 项目配置文件 opencode.json
+        // 4. 全局配置文件 ~/.config/opencode/opencode.json
+        // 
+        // 推荐在环境变量配置中设置:
+        // - OPENCODE_CONFIG_CONTENT: {"model":"anthropic/claude-sonnet-4-5"}
+        // - 或各提供商的 API Key 环境变量
 
         var sb = new StringBuilder();
         sb.Append("run");
-
-        // 添加模型参数 (必需，否则 OpenCode 可能卡住)
-        var model = tool.ExtraOptions?.GetValueOrDefault("model") ?? "openai/gpt-4o-mini";
-        sb.Append($" --model {model}");
 
         // 添加会话恢复参数
         if (context.IsResume && !string.IsNullOrEmpty(context.CliThreadId))
@@ -142,9 +149,30 @@ public class OpenCodeAdapter : ICliToolAdapter
             }
 
             // 根据不同的事件类型解析内容
-            // OpenCode 的 JSON 事件包含: type, timestamp, sessionID 等字段
+            // OpenCode 的 JSON 事件格式:
+            // {"type":"step_start","timestamp":...,"sessionID":"...","part":{...}}
+            // {"type":"text","timestamp":...,"sessionID":"...","part":{"type":"text","text":"..."}}
+            // {"type":"step_finish","timestamp":...,"sessionID":"...","part":{...}}
+            // {"type":"tool_start","timestamp":...,"sessionID":"...","part":{"type":"tool-start","tool":"..."}}
+            // {"type":"tool_finish","timestamp":...,"sessionID":"...","part":{"type":"tool-finish",...}}
             switch (outputEvent.EventType)
             {
+                case "step_start":
+                    ParseStepStartEvent(root, outputEvent);
+                    break;
+                    
+                case "step_finish":
+                    ParseStepFinishEvent(root, outputEvent);
+                    break;
+
+                case "tool_start":
+                    ParseToolStartEvent(root, outputEvent);
+                    break;
+                    
+                case "tool_finish":
+                    ParseToolFinishEvent(root, outputEvent);
+                    break;
+
                 case "tool_use":
                     ParseToolUseEvent(root, outputEvent);
                     break;
@@ -219,7 +247,11 @@ public class OpenCodeAdapter : ICliToolAdapter
         return outputEvent.EventType switch
         {
             "session_start" => "会话开始",
+            "step_start" => "步骤开始",
+            "step_finish" => "步骤完成",
             "message" or "text" => "AI 回复",
+            "tool_start" => "工具调用",
+            "tool_finish" => "工具完成",
             "tool_use" => "工具调用",
             "tool_result" => "工具结果",
             "error" => "错误",
@@ -236,7 +268,11 @@ public class OpenCodeAdapter : ICliToolAdapter
         return outputEvent.EventType switch
         {
             "session_start" => "badge-info",
+            "step_start" => "badge-info",
+            "step_finish" => "badge-info",
             "message" or "text" => "badge-success",
+            "tool_start" => "badge-primary",
+            "tool_finish" => "badge-secondary",
             "tool_use" => "badge-primary",
             "tool_result" => "badge-secondary",
             "session_end" or "complete" => "badge-info",
@@ -252,7 +288,11 @@ public class OpenCodeAdapter : ICliToolAdapter
         return outputEvent.EventType switch
         {
             "session_start" => "START",
+            "step_start" => "STEP",
+            "step_finish" => "DONE",
             "message" or "text" => "MESSAGE",
+            "tool_start" => "TOOL",
+            "tool_finish" => "RESULT",
             "tool_use" => "TOOL",
             "tool_result" => "RESULT",
             "session_end" or "complete" => "DONE",
@@ -268,12 +308,171 @@ public class OpenCodeAdapter : ICliToolAdapter
         outputEvent.Content = "OpenCode 会话已启动";
     }
 
+    private void ParseStepStartEvent(JsonElement root, CliOutputEvent outputEvent)
+    {
+        outputEvent.Title = "步骤开始";
+        outputEvent.ItemType = "step_start";
+        
+        // 从 part 字段提取信息
+        if (root.TryGetProperty("part", out var partElement))
+        {
+            if (partElement.TryGetProperty("snapshot", out var snapshotElement))
+            {
+                outputEvent.Content = $"快照: {snapshotElement.GetString()}";
+            }
+        }
+        
+        if (string.IsNullOrEmpty(outputEvent.Content))
+        {
+            outputEvent.Content = "开始处理请求...";
+        }
+    }
+
+    private void ParseStepFinishEvent(JsonElement root, CliOutputEvent outputEvent)
+    {
+        outputEvent.Title = "步骤完成";
+        outputEvent.ItemType = "step_finish";
+        
+        var sb = new StringBuilder();
+        
+        // 从 part 字段提取信息
+        if (root.TryGetProperty("part", out var partElement))
+        {
+            if (partElement.TryGetProperty("reason", out var reasonElement))
+            {
+                var reason = reasonElement.GetString();
+                sb.AppendLine($"结束原因: {reason}");
+            }
+            
+            if (partElement.TryGetProperty("cost", out var costElement))
+            {
+                var cost = costElement.GetDouble();
+                sb.AppendLine($"费用: ${cost:F6}");
+            }
+            
+            if (partElement.TryGetProperty("tokens", out var tokensElement))
+            {
+                if (tokensElement.TryGetProperty("input", out var inputTokens))
+                {
+                    sb.AppendLine($"输入 tokens: {inputTokens.GetInt32()}");
+                }
+                if (tokensElement.TryGetProperty("output", out var outputTokens))
+                {
+                    sb.AppendLine($"输出 tokens: {outputTokens.GetInt32()}");
+                }
+            }
+        }
+        
+        outputEvent.Content = sb.Length > 0 ? sb.ToString().TrimEnd() : "处理完成";
+    }
+
+    private void ParseToolStartEvent(JsonElement root, CliOutputEvent outputEvent)
+    {
+        outputEvent.Title = "工具调用";
+        outputEvent.ItemType = "tool_start";
+        
+        var sb = new StringBuilder();
+        
+        // 从 part 字段提取工具信息
+        if (root.TryGetProperty("part", out var partElement))
+        {
+            if (partElement.TryGetProperty("tool", out var toolElement))
+            {
+                sb.AppendLine($"工具: {toolElement.GetString()}");
+            }
+            
+            if (partElement.TryGetProperty("state", out var stateElement))
+            {
+                if (stateElement.TryGetProperty("title", out var titleElement))
+                {
+                    sb.AppendLine($"操作: {titleElement.GetString()}");
+                }
+                
+                if (stateElement.TryGetProperty("input", out var inputElement))
+                {
+                    var inputStr = inputElement.ToString();
+                    if (inputStr.Length > 500)
+                    {
+                        inputStr = inputStr.Substring(0, 500) + "...";
+                    }
+                    sb.AppendLine($"参数: {inputStr}");
+                }
+            }
+        }
+        
+        outputEvent.Content = sb.Length > 0 ? sb.ToString().TrimEnd() : "调用工具中...";
+    }
+
+    private void ParseToolFinishEvent(JsonElement root, CliOutputEvent outputEvent)
+    {
+        outputEvent.Title = "工具完成";
+        outputEvent.ItemType = "tool_finish";
+        
+        var sb = new StringBuilder();
+        
+        // 从 part 字段提取结果
+        if (root.TryGetProperty("part", out var partElement))
+        {
+            if (partElement.TryGetProperty("tool", out var toolElement))
+            {
+                sb.AppendLine($"工具: {toolElement.GetString()}");
+            }
+            
+            if (partElement.TryGetProperty("state", out var stateElement))
+            {
+                if (stateElement.TryGetProperty("status", out var statusElement))
+                {
+                    var status = statusElement.GetString();
+                    sb.AppendLine($"状态: {status}");
+                    
+                    if (status == "error" || status == "failed")
+                    {
+                        outputEvent.IsError = true;
+                    }
+                }
+                
+                if (stateElement.TryGetProperty("output", out var outputElement))
+                {
+                    var output = outputElement.GetString();
+                    if (!string.IsNullOrEmpty(output))
+                    {
+                        if (output.Length > 1000)
+                        {
+                            output = output.Substring(0, 1000) + "...";
+                        }
+                        sb.AppendLine($"输出:\n{output}");
+                    }
+                }
+            }
+        }
+        
+        outputEvent.Content = sb.Length > 0 ? sb.ToString().TrimEnd() : "工具执行完成";
+    }
+
     private void ParseMessageEvent(JsonElement root, CliOutputEvent outputEvent)
     {
         outputEvent.ItemType = "message";
         outputEvent.Title = "AI 回复";
         
-        // 尝试从多个可能的字段提取消息内容
+        // OpenCode 的 text 事件格式:
+        // {"type":"text","part":{"type":"text","text":"你好！有什么我可以帮助你的吗？",...}}
+        
+        // 优先从 part.text 提取消息内容 (OpenCode 格式)
+        if (root.TryGetProperty("part", out var partElement))
+        {
+            if (partElement.TryGetProperty("text", out var partTextElement))
+            {
+                outputEvent.Content = partTextElement.GetString();
+                return;
+            }
+            if (partElement.TryGetProperty("content", out var partContentElement))
+            {
+                outputEvent.Content = partContentElement.GetString();
+                return;
+            }
+        }
+        
+        // 兼容其他格式
         if (root.TryGetProperty("content", out var contentElement))
         {
             outputEvent.Content = contentElement.GetString();
@@ -281,11 +480,6 @@ public class OpenCodeAdapter : ICliToolAdapter
         else if (root.TryGetProperty("text", out var textElement))
         {
             outputEvent.Content = textElement.GetString();
-        }
-        else if (root.TryGetProperty("part", out var partElement) &&
-                 partElement.TryGetProperty("content", out var partContentElement))
-        {
-            outputEvent.Content = partContentElement.GetString();
         }
     }
 
