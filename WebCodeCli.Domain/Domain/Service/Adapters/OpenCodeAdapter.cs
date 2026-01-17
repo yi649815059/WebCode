@@ -17,8 +17,11 @@ namespace WebCodeCli.Domain.Domain.Service.Adapters;
 /// 
 /// 命令格式:
 /// - 启动 TUI: opencode
-/// - 非交互模式: opencode run "prompt" --format json
-/// - 继续会话: opencode run --session <id> "prompt"
+/// - 非交互模式: opencode run [message..] --format json
+/// - 继续会话: opencode run --session <id> [message..]
+/// - 上次会话: opencode run --continue [message..]
+/// - 附加文件: opencode run [message..] --file <path>
+/// - 指定模型: opencode run [message..] --model <provider/model>
 /// </summary>
 public class OpenCodeAdapter : ICliToolAdapter
 {
@@ -39,8 +42,17 @@ public class OpenCodeAdapter : ICliToolAdapter
     {
         var escapedPrompt = EscapeShellArgument(prompt);
 
-        // OpenCode CLI 基本命令格式
-        // opencode run "prompt" [options]
+        // OpenCode CLI 命令格式 (根据官方文档):
+        // opencode run [message..] [options]
+        // 
+        // 重要标志:
+        // --format json         : JSON 事件流输出
+        // --session <id>        : 继续指定会话
+        // --continue / -c       : 继续上一个会话
+        // --model <provider/model> : 指定模型
+        // --agent <name>        : 使用特定 agent
+        // --file <path> / -f    : 附加文件
+        // --title <text>        : 会话标题
         
         var sb = new StringBuilder();
         sb.Append("run");
@@ -48,16 +60,16 @@ public class OpenCodeAdapter : ICliToolAdapter
         // 添加会话恢复参数
         if (context.IsResume && !string.IsNullOrEmpty(context.CliThreadId))
         {
+            // 使用 --session 恢复指定会话
             sb.Append($" --session {context.CliThreadId}");
         }
+        else if (context.IsResume)
+        {
+            // 使用 --continue 继续上一个会话
+            sb.Append(" --continue");
+        }
         
-        // 添加提示词
-        sb.Append($" \"{escapedPrompt}\"");
-        
-        // 添加 JSON 格式输出
-        sb.Append(" --format json");
-        
-        // 如果配置中有额外参数 (如 --model, --agent 等)
+        // 如果配置中有额外参数 (如 --model, --agent 等),在 prompt 之前添加
         var template = tool.ArgumentTemplate ?? string.Empty;
         if (!string.IsNullOrWhiteSpace(template) && !template.Contains("{prompt}", StringComparison.Ordinal))
         {
@@ -66,13 +78,19 @@ public class OpenCodeAdapter : ICliToolAdapter
         }
         else if (!string.IsNullOrWhiteSpace(template))
         {
-            // 模板中包含 {prompt}，但我们已经添加了 prompt，提取其他参数
+            // 模板中包含 {prompt}，提取其他参数
             var args = template.Replace("{prompt}", "").Replace("\"\"", "").Trim();
             if (!string.IsNullOrEmpty(args))
             {
                 sb.Append($" {args}");
             }
         }
+        
+        // 添加提示词 (作为位置参数)
+        sb.Append($" \"{escapedPrompt}\"");
+        
+        // 添加 JSON 格式输出 (必须在最后,根据文档约定)
+        sb.Append(" --format json");
         
         return sb.ToString();
     }
