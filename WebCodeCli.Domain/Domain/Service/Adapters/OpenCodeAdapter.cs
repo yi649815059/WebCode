@@ -22,6 +22,14 @@ namespace WebCodeCli.Domain.Domain.Service.Adapters;
 /// - 上次会话: opencode run --continue [message..]
 /// - 附加文件: opencode run [message..] --file <path>
 /// - 指定模型: opencode run [message..] --model <provider/model>
+/// 
+/// 配置说明:
+/// - Command: "opencode"
+/// - ArgumentTemplate: 留空或随意填写（适配器不使用此配置）
+/// - 适配器会自动构建完整的命令格式
+/// 
+/// 注意: 与 ClaudeCodeAdapter 类似，此适配器完全控制命令格式，
+///       忽略 ArgumentTemplate 配置以确保与官方 CLI 规范一致。
 /// </summary>
 public class OpenCodeAdapter : ICliToolAdapter
 {
@@ -44,15 +52,6 @@ public class OpenCodeAdapter : ICliToolAdapter
 
         // OpenCode CLI 命令格式 (根据官方文档):
         // opencode run [message..] [options]
-        // 
-        // 重要标志:
-        // --format json         : JSON 事件流输出
-        // --session <id>        : 继续指定会话
-        // --continue / -c       : 继续上一个会话
-        // --model <provider/model> : 指定模型
-        // --agent <name>        : 使用特定 agent
-        // --file <path> / -f    : 附加文件
-        // --title <text>        : 会话标题
         
         var sb = new StringBuilder();
         sb.Append("run");
@@ -69,27 +68,10 @@ public class OpenCodeAdapter : ICliToolAdapter
             sb.Append(" --continue");
         }
         
-        // 如果配置中有额外参数 (如 --model, --agent 等),在 prompt 之前添加
-        var template = tool.ArgumentTemplate ?? string.Empty;
-        if (!string.IsNullOrWhiteSpace(template) && !template.Contains("{prompt}", StringComparison.Ordinal))
-        {
-            // 模板中不包含 {prompt} 占位符，直接追加
-            sb.Append($" {template}");
-        }
-        else if (!string.IsNullOrWhiteSpace(template))
-        {
-            // 模板中包含 {prompt}，提取其他参数
-            var args = template.Replace("{prompt}", "").Replace("\"\"", "").Trim();
-            if (!string.IsNullOrEmpty(args))
-            {
-                sb.Append($" {args}");
-            }
-        }
-        
         // 添加提示词 (作为位置参数)
         sb.Append($" \"{escapedPrompt}\"");
         
-        // 添加 JSON 格式输出 (必须在最后,根据文档约定)
+        // 添加 JSON 格式输出
         sb.Append(" --format json");
         
         return sb.ToString();
