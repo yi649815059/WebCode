@@ -546,7 +546,7 @@
       "opencodeGitBashPath": "C:\\Program Files\\Git\\bin\\bash.exe",
       "opencodeConfig": "/path/to/opencode.json",
       "opencodeConfigDir": "/path/to/config/dir",
-      "opencodeConfigContent": "{\"model\":\"...\"}",
+      "opencodeConfigContent": "{\"model\":\"provider/model\",\"provider\":{...}} (전체 JSON 구성)",
       "opencodeDisableAutoupdate": "true/false",
       "opencodeDisablePrune": "true/false",
       "opencodeDisableTerminalTitle": "true/false",

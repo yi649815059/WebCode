@@ -358,10 +358,66 @@ OpenCode 支持以下环境变量：
 | `OPENCODE_AUTO_SHARE` | 自动分享会话 |
 | `OPENCODE_CONFIG` | 配置文件路径 |
 | `OPENCODE_CONFIG_DIR` | 配置目录路径 |
+| `OPENCODE_CONFIG_CONTENT` | **内联 JSON 配置内容（最高优先级）** |
 | `OPENCODE_DISABLE_AUTOUPDATE` | 禁用自动更新检查 |
 | `OPENCODE_SERVER_PASSWORD` | 服务器模式的密码（启用基本认证） |
 | `OPENCODE_SERVER_USERNAME` | 服务器模式的用户名（默认 `opencode`） |
 | `OPENCODE_CLIENT` | 客户端标识符（默认 `cli`） |
+
+### 使用 OPENCODE_CONFIG_CONTENT 环境变量
+
+`OPENCODE_CONFIG_CONTENT` 是一个强大的环境变量，允许你直接通过 JSON 字符串配置 OpenCode，**优先级最高**（高于所有文件配置）。
+
+**配置优先级（从低到高）：**
+1. 远程组织默认配置
+2. 全局配置 (`~/.config/opencode/opencode.json`)
+3. `OPENCODE_CONFIG` 环境变量指定的配置文件
+4. 项目级配置 (`opencode.json` 在项目根目录)
+5. `.opencode` 目录（agents、plugins、commands）
+6. **`OPENCODE_CONFIG_CONTENT` 内联配置（最高优先级）**
+
+**示例配置：**
+
+```json
+{
+  "model": "anthropic/claude-3-5-sonnet-20241022",
+  "provider": {
+    "anthropic": {
+      "options": {
+        "apiKey": "{env:ANTHROPIC_API_KEY}",
+        "baseURL": "https://api.antsk.cn",
+        "timeout": 120000
+      }
+    },
+    "openai": {
+      "options": {
+        "apiKey": "{env:OPENAI_API_KEY}",
+        "baseURL": "https://api.antsk.cn/v1"
+      }
+    }
+  },
+  "permission": {
+    "edit": "allow",
+    "bash": "allow"
+  },
+  "tools": {
+    "bash": true,
+    "write": true,
+    "edit": true
+  },
+  "autoupdate": false
+}
+```
+
+**支持的插值语法：**
+- `{env:VAR_NAME}` - 引用其他环境变量
+- `{file:path/to/file}` - 引用文件内容
+
+**在 WebCode 中使用：**
+
+在 Setup 页面第四步（OpenCode 配置）中，找到 `OPENCODE_CONFIG_CONTENT` 环境变量，将上述 JSON 配置（可压缩为一行）填入即可。
+
+这样就不需要依赖 `~/.config/opencode/opencode.json` 配置文件了
 
 ## 最佳实践
 
@@ -478,6 +534,32 @@ opencode --print-logs
 
 # 设置日志级别
 opencode --log-level DEBUG
+```
+
+### 环境变量示例
+```
+{
+  "model": "WebCode/glm-4.7",
+  "provider": {
+    "WebCode": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "WebCode",
+      "options": {
+        "baseURL": "https://api.antsk.cn/v1",
+        "apiKey": "{env:WEBCODE_API_KEY}"
+      },
+      "models": {
+        "glm-4.7": {
+          "name": "glm-4.7"
+        }
+      }
+    }
+  },
+  "permission": {
+    "edit": "allow",
+    "bash": "allow"
+  }
+}
 ```
 
 ## 相关资源
