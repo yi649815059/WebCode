@@ -1,5 +1,6 @@
 @using Microsoft.JSInterop
 @using Microsoft.AspNetCore.Components
+@using WebCodeCli.Helpers
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 
@@ -391,32 +392,7 @@
     private string GetFileTypeIcon()
     {
         var extension = System.IO.Path.GetExtension(_fileName).ToLower();
-        
-        return extension switch
-        {
-            // Word
-            ".doc" or ".docx" or ".docm" or ".dotx" or ".dotm" or ".odt" =>
-                "<svg class=\"w-6 h-6 text-blue-600 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 24 24\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM9.5 18.5L6 8h2l2 6 2-6h2l-3.5 10.5h-1zM14 9V3.5L19.5 9H14z\"/></svg>",
-            
-            // Excel
-            ".xls" or ".xlsx" or ".xlsm" or ".xlsb" or ".xltx" or ".xltm" or ".csv" or ".ods" =>
-                "<svg class=\"w-6 h-6 text-green-600 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 24 24\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM9 19H7v-2h2v2zm0-4H7v-2h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zm4 4h-2v-2h2v2zm0-4h-2v-2h2v2zM14 9V3.5L19.5 9H14z\"/></svg>",
-            
-            // PowerPoint
-            ".ppt" or ".pptx" or ".pptm" or ".potx" or ".potm" or ".ppsx" or ".ppsm" or ".odp" =>
-                "<svg class=\"w-6 h-6 text-orange-600 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 24 24\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM9 19H7V9h4c1.1 0 2 .9 2 2v2c0 1.1-.9 2-2 2H9v4zm0-6h2v-2H9v2zM14 9V3.5L19.5 9H14z\"/></svg>",
-            
-            // PDF
-            ".pdf" =>
-                "<svg class=\"w-6 h-6 text-red-500 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 24 24\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 9V3.5L19.5 9H14z\"/></svg>",
-            
-            // 图片
-            ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" or ".bmp" or ".svg" or ".ico" =>
-                "<svg class=\"w-6 h-6 text-pink-500 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z\" clip-rule=\"evenodd\"></path></svg>",
-            
-            // 默认代码图标
-            _ => "<svg class=\"w-6 h-6 text-gray-700 flex-shrink-0\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4\"></path></svg>"
-        };
+        return FileIconHelper.GetLargeFileIcon(extension);
     }
 
     /// <summary>
