@@ -2337,6 +2337,12 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
                 if (viewport) {
                     viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
                 }
+
+                // 禁止页面整体滚动，防止拖拽页面导致输入区脱离
+                document.documentElement.style.height = '100%';
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.height = '100%';
+                document.body.style.overflow = 'hidden';
                 
                 // 处理软键盘弹出时的视口调整
                 if ('visualViewport' in window) {
