@@ -75,12 +75,12 @@ WebCode 是一个**在线 AI 全能工作平台**，让你可以通过 Web 浏�
 |------|------|------|------|
 | **Claude Code CLI** | `claude` | MCP 服务器、会话恢复、stream-json 输出、代理系统 | 🟢 已启用 |
 | **Codex CLI** | `codex` | 沙箱执行、网络搜索、Git 集成、JSONL 输出 | 🟢 已启用 |
+| **OpenCode CLI** | `opencode` | GitHub Models 集成、多模型支持、流式输出 | 🟢 已启用 |
 
 ### 🔧 待扩展支持
 
 | 工具 | 命令 | 特点 | 状态 |
 |------|------|------|------|
-| **OpenCode CLI** | `opencode` | GitHub Models 集成、多模型支持、流式输出 | 🟡 计划支持 |
 | **GitHub Copilot CLI** | `copilot` | GitHub 集成、细粒度权限 | 🟡 已配置，待适配 |
 | **Qwen CLI** | `qwen` | YOLO 模式、检查点、扩展系统 | 🟡 已配置，待适配 |
 | **Gemini CLI** | `gemini` | Google AI、简洁配置 | 🟡 已配置，待适配 |

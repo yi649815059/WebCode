@@ -75,12 +75,12 @@ WebCodeCli is an **online AI-powered workspace platform** that allows you to rem
 |------|---------|----------|--------|
 | **Claude Code CLI** | `claude` | MCP server, session recovery, stream-json output, proxy system | 🟢 Enabled |
 | **Codex CLI** | `codex` | Sandbox execution, web search, Git integration, JSONL output | 🟢 Enabled |
+| **OpenCode CLI** | `opencode` | GitHub Models integration, multi-model support, streaming output | 🟢 Enabled |
 
 ### 🔧 To Be Extended
 
 | Tool | Command | Features | Status |
 |------|---------|----------|--------|
-| **OpenCode CLI** | `opencode` | GitHub Models integration, multi-model support, streaming output | 🟡 Planned support |
 | **GitHub Copilot CLI** | `copilot` | GitHub integration, fine-grained permissions | 🟡 Configured, pending adaptation |
 | **Qwen CLI** | `qwen` | YOLO mode, checkpoints, extension system | 🟡 Configured, pending adaptation |
 | **Gemini CLI** | `gemini` | Google AI, simple configuration | 🟡 Configured, pending adaptation |
