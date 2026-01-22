@@ -162,9 +162,9 @@ The application will start at `http://localhost:5000`, visit `/code-assistant` t
 
 ### Configure CLI Tools
 
-By default, you do not need to edit `appsettings.json`. After the first start, complete the setup wizard in the Web UI, or configure Claude/Codex later in System Settings.
+By default, you do not need to edit appsettings.json. On first visit, you will enter the setup wizard (/setup) to initialize settings in the Web UI; later you can adjust Claude/Codex/OpenCode in System Settings.
 
-Use `appsettings.json` / environment variables only if you want pre-provisioning (CI/CD, unattended deployment, or fast local switching).
+Use appsettings.json / environment variables only if you want pre-provisioning (CI/CD, unattended deployment, or fast local switching).
 
 Example (advanced):
 

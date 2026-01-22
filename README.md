@@ -162,9 +162,9 @@ dotnet run --project WebCode
 
 ### 配置 Claude/Codex 等 CLI（推荐界面配置）
 
-默认情况下，无需编辑 `appsettings.json`：首次启动后在 Web 界面完成设置向导，或登录后在“系统设置”中配置 Claude/Codex 等参数。
+默认情况下无需编辑 appsettings.json：首次启动会进入设置向导（/setup），在 Web 界面完成初始化；之后可在“系统设置”中随时调整 Claude/Codex/OpenCode 等参数。
 
-仅在以下场景建议使用 `appsettings.json` / 环境变量进行预置：
+仅在以下场景建议使用 appsettings.json / 环境变量进行预置：
 
 - 需要无人值守部署（CI/CD）
 - 需要把配置写死在镜像/配置文件中
