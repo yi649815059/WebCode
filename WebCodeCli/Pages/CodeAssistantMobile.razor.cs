@@ -139,7 +139,6 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
         _currentLanguage = language;
         await LoadTranslationsAsync();
         InitializeTabs();
-        InitializeQuickActions();
         StateHasChanged();
     }
     
@@ -154,7 +153,6 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
             await L.ReloadTranslationsAsync();
             await LoadTranslationsAsync();
             InitializeTabs();
-            InitializeQuickActions();
             StateHasChanged();
         }
         catch (Exception ex)
@@ -180,35 +178,26 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
     private string _skillFilter = string.Empty;
     
     // 快捷操作项
-    private List<QuickActionItem> _quickActionItems = new();
-    
-    private record QuickActionItem(string Id, string Title, string Icon);
-    
-    private void InitializeQuickActions()
-    {
-        _quickActionItems = new List<QuickActionItem>
-        {
-            new("generate", T("codeAssistant.quickAction.generate"), "💻"),
-            new("explain", T("codeAssistant.quickAction.explain"), "📖"),
-            new("optimize", T("codeAssistant.quickAction.optimize"), "⚡"),
-            new("debug", T("codeAssistant.quickAction.debug"), "🔧"),
-            new("test", T("codeAssistant.quickAction.test"), "🧪"),
-            new("docs", T("codeAssistant.quickAction.docs"), "📝"),
-            new("refactor", T("codeAssistant.quickAction.refactor"), "🔄"),
-            new("review", T("codeAssistant.quickAction.review"), "👀")
-        };
-    }
     
     private void ToggleQuickActions()
     {
         _showQuickActions = !_showQuickActions;
     }
     
-    private void OnQuickActionClick(QuickActionItem action)
+    private async Task OnQuickActionSelected(string actionContent)
     {
-        _inputMessage = T("codeAssistant.helpWith", ("action", action.Title));
+        _inputMessage = string.IsNullOrWhiteSpace(_inputMessage)
+            ? actionContent
+            : _inputMessage + "\n\n" + actionContent;
+
         _showQuickActions = false;
         StateHasChanged();
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('mobile-input-message')?.focus()");
+        }
+        catch { }
     }
     
     #region Skill技能选择器
@@ -2121,6 +2110,7 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
     private CodePreviewModal _codePreviewModal = default!;
     private EnvironmentVariableConfigModal _envConfigModal = default!;
     private ProgressTracker _progressTracker = default!;
+    private QuickActionsPanel _quickActionsPanel = default!;
 
     // 设置页选择器
     private bool _showToolPicker = false;
@@ -2265,7 +2255,6 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
         catch { }
         
         InitializeTabs();
-        InitializeQuickActions();
         
         // 检查认证状态
         if (AuthenticationService.IsAuthenticationEnabled())

@@ -377,17 +377,8 @@
                 <!-- 快捷操作面板 -->
                 @if (_showQuickActions)
                 {
-                    <div class="mb-2 p-2 bg-gray-50 rounded-xl border border-gray-200">
-                        <div class="grid grid-cols-4 gap-2">
-                            @foreach (var action in _quickActionItems.Take(8))
-                            {
-                                <button @onclick="() => OnQuickActionClick(action)"
-                                        class="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white active:bg-gray-100 transition-colors">
-                                    <span class="text-lg">@action.Icon</span>
-                                    <span class="text-[10px] text-gray-600 mt-1 line-clamp-1">@action.Title</span>
-                                </button>
-                            }
-                        </div>
+                    <div class="mb-2">
+                        <QuickActionsPanel @ref="_quickActionsPanel" OnActionSelected="OnQuickActionSelected" />
                     </div>
                 }
                 
