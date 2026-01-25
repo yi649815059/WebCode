@@ -647,6 +647,8 @@
     "delete": "删除项目",
     "clone": "克隆项目",
     "pull": "拉取更新",
+    "saving": "保存中...",
+    "saveChanges": "保存修改",
     "name": "项目名称",
     "namePlaceholder": "例如：我的项目",
     "gitUrl": "Git仓库地址",
@@ -667,6 +669,7 @@
     "branch": "分支",
     "branchPlaceholder": "main",
     "fetchBranches": "获取分支",
+    "moreBranches": "+{count} 更多",
     "status": {
       "pending": "待克隆",
       "cloning": "克隆中",
@@ -693,8 +696,57 @@
       "cloneFailed": "克隆项目失败",
       "pullFailed": "拉取更新失败",
       "createFailed": "创建项目失败",
+      "updateFailed": "更新项目失败",
       "deleteFailed": "删除项目失败",
       "fetchBranchesFailed": "获取分支列表失败"
+    }
+  },
+  "share": {
+    "title": "分享会话",
+    "tabs": {
+      "create": "创建分享",
+      "manage": "管理分享"
+    },
+    "createSuccessTitle": "分享创建成功！",
+    "createSuccessDesc": "复制下方链接分享给他人",
+    "copyLink": "复制链接",
+    "accessPassword": "访问密码",
+    "expiresAt": "过期时间",
+    "createNew": "创建新分享",
+    "form": {
+      "title": "分享标题（可选）",
+      "titlePlaceholder": "给分享起个名字...",
+      "password": "访问密码",
+      "passwordPlaceholder": "设置4位以上密码",
+      "passwordHint": "密码将用于保护分享内容，请妥善保管",
+      "expiration": "过期时间（可选）",
+      "expirationOptions": {
+        "never": "永不过期",
+        "1h": "1小时后",
+        "24h": "24小时后",
+        "7d": "7天后",
+        "30d": "30天后"
+      }
+    },
+    "creating": "创建中...",
+    "createLink": "创建分享链接",
+    "noShares": "暂无分享记录",
+    "createFirst": "创建第一个分享",
+    "status": {
+      "inactive": "已停用",
+      "expired": "已过期",
+      "active": "有效"
+    },
+    "createdAt": "创建时间",
+    "viewCount": "访问次数",
+    "viewLink": "查看链接",
+    "refreshSnapshot": "刷新快照（同步最新聊天记录）",
+    "linkLabel": "分享链接",
+    "passwordHiddenHint": "密码在创建时显示，出于安全考虑无法再次查看",
+    "error": {
+      "passwordTooShort": "密码长度不能少于4位",
+      "createFailed": "创建分享失败",
+      "createFailedWithMessage": "创建失败: {message}"
     }
   }
 }

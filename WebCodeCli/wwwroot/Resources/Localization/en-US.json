@@ -649,6 +649,8 @@
     "delete": "Delete Project",
     "clone": "Clone Project",
     "pull": "Pull Updates",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
     "name": "Project Name",
     "namePlaceholder": "e.g. My Project",
     "gitUrl": "Git Repository URL",
@@ -669,6 +671,7 @@
     "branch": "Branch",
     "branchPlaceholder": "main",
     "fetchBranches": "Fetch Branches",
+    "moreBranches": "+{count} more",
     "status": {
       "pending": "Pending",
       "cloning": "Cloning",
@@ -695,8 +698,57 @@
       "cloneFailed": "Failed to clone project",
       "pullFailed": "Failed to pull updates",
       "createFailed": "Failed to create project",
+      "updateFailed": "Failed to update project",
       "deleteFailed": "Failed to delete project",
       "fetchBranchesFailed": "Failed to fetch branches"
+    }
+  },
+  "share": {
+    "title": "Share Session",
+    "tabs": {
+      "create": "Create Share",
+      "manage": "Manage Shares"
+    },
+    "createSuccessTitle": "Share created successfully!",
+    "createSuccessDesc": "Copy the link below to share with others",
+    "copyLink": "Copy link",
+    "accessPassword": "Access password",
+    "expiresAt": "Expires at",
+    "createNew": "Create a new share",
+    "form": {
+      "title": "Share title (optional)",
+      "titlePlaceholder": "Give your share a name...",
+      "password": "Access password",
+      "passwordPlaceholder": "Set a password with at least 4 characters",
+      "passwordHint": "Password protects the shared content. Keep it safe.",
+      "expiration": "Expiration (optional)",
+      "expirationOptions": {
+        "never": "Never",
+        "1h": "In 1 hour",
+        "24h": "In 24 hours",
+        "7d": "In 7 days",
+        "30d": "In 30 days"
+      }
+    },
+    "creating": "Creating...",
+    "createLink": "Create share link",
+    "noShares": "No share records",
+    "createFirst": "Create your first share",
+    "status": {
+      "inactive": "Disabled",
+      "expired": "Expired",
+      "active": "Active"
+    },
+    "createdAt": "Created at",
+    "viewCount": "Views",
+    "viewLink": "View link",
+    "refreshSnapshot": "Refresh snapshot (sync latest chat)",
+    "linkLabel": "Share link",
+    "passwordHiddenHint": "The password is only shown at creation and cannot be viewed again",
+    "error": {
+      "passwordTooShort": "Password must be at least 4 characters",
+      "createFailed": "Failed to create share",
+      "createFailedWithMessage": "Create failed: {message}"
     }
   }
 }

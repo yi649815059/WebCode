@@ -647,6 +647,8 @@
     "delete": "프로젝트 삭제",
     "clone": "클론",
     "pull": "업데이트",
+    "saving": "저장 중...",
+    "saveChanges": "수정 저장",
     "name": "프로젝트 이름",
     "namePlaceholder": "예: 내 프로젝트",
     "gitUrl": "Git 저장소 URL",
@@ -667,6 +669,7 @@
     "branch": "브랜치",
     "branchPlaceholder": "main",
     "fetchBranches": "브랜치 가져오기",
+    "moreBranches": "+{count} 더보기",
     "status": {
       "pending": "대기 중",
       "cloning": "클론 중",
@@ -693,8 +696,57 @@
       "cloneFailed": "프로젝트 클론 실패",
       "pullFailed": "업데이트 가져오기 실패",
       "createFailed": "프로젝트 생성 실패",
+      "updateFailed": "프로젝트 업데이트 실패",
       "deleteFailed": "프로젝트 삭제 실패",
       "fetchBranchesFailed": "브랜치 가져오기 실패"
+    }
+  },
+  "share": {
+    "title": "세션 공유",
+    "tabs": {
+      "create": "공유 생성",
+      "manage": "공유 관리"
+    },
+    "createSuccessTitle": "공유가 생성되었습니다!",
+    "createSuccessDesc": "아래 링크를 복사해 공유하세요",
+    "copyLink": "링크 복사",
+    "accessPassword": "접근 비밀번호",
+    "expiresAt": "만료 시간",
+    "createNew": "새 공유 만들기",
+    "form": {
+      "title": "공유 제목(선택)",
+      "titlePlaceholder": "공유 이름을 입력하세요...",
+      "password": "접근 비밀번호",
+      "passwordPlaceholder": "4자 이상 비밀번호 설정",
+      "passwordHint": "비밀번호는 공유 내용을 보호합니다. 안전하게 보관하세요.",
+      "expiration": "만료 시간(선택)",
+      "expirationOptions": {
+        "never": "만료 없음",
+        "1h": "1시간 후",
+        "24h": "24시간 후",
+        "7d": "7일 후",
+        "30d": "30일 후"
+      }
+    },
+    "creating": "생성 중...",
+    "createLink": "공유 링크 생성",
+    "noShares": "공유 기록이 없습니다",
+    "createFirst": "첫 공유 만들기",
+    "status": {
+      "inactive": "비활성화",
+      "expired": "만료됨",
+      "active": "활성"
+    },
+    "createdAt": "생성 시간",
+    "viewCount": "조회 수",
+    "viewLink": "링크 보기",
+    "refreshSnapshot": "스냅샷 새로고침(최신 채팅 동기화)",
+    "linkLabel": "공유 링크",
+    "passwordHiddenHint": "비밀번호는 생성 시에만 표시되며 다시 볼 수 없습니다",
+    "error": {
+      "passwordTooShort": "비밀번호는 4자 이상이어야 합니다",
+      "createFailed": "공유 생성 실패",
+      "createFailedWithMessage": "생성 실패: {message}"
     }
   }
 }
