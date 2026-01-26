@@ -801,9 +801,18 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
     {
         if (string.Equals(outputEvent.EventType, "turn.completed", StringComparison.OrdinalIgnoreCase))
         {
+            // 当有 Usage 信息时，Content 设为空，只显示 Token 统计，避免与最后一条消息重复
             return outputEvent.Usage is null
                 ? T("cliEvent.content.turnCompleted")
-                : T("cliEvent.content.turnCompletedWithUsage");
+                : string.Empty;
+        }
+
+        // result 类型事件与 turn.completed 类似，有 Usage 时不显示内容，避免重复
+        if (string.Equals(outputEvent.EventType, "result", StringComparison.OrdinalIgnoreCase))
+        {
+            return outputEvent.Usage is null
+                ? (fallbackContent ?? T("cliEvent.content.turnCompleted"))
+                : string.Empty;
         }
 
         if (string.Equals(outputEvent.EventType, "turn.started", StringComparison.OrdinalIgnoreCase))
@@ -1097,6 +1106,21 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
                 continue;
             }
 
+            // 完成类型事件：设置为可折叠（默认折叠）
+            if (IsCompletionEvent(evt))
+            {
+                groups.Add(new JsonlEventGroup
+                {
+                    Id = $"evt-{i}",
+                    Kind = "completion",
+                    Title = evt.Title,
+                    IsCompleted = true,
+                    IsCollapsible = true,
+                    Items = { evt }
+                });
+                continue;
+            }
+
             // 其他事件作为单独的卡片
             groups.Add(new JsonlEventGroup
             {
@@ -1123,6 +1147,18 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
         if (string.Equals(evt.ItemType, "todo_list", StringComparison.OrdinalIgnoreCase))
             return false;
         return evt.Type == "tool_use" || evt.Type == "tool_result";
+    }
+    
+    private static bool IsCompletionEvent(JsonlDisplayItem evt)
+    {
+        // 判断是否为完成类型的事件（这些事件默认折叠起来）
+        return evt.Type == "turn.completed" || 
+               evt.Type == "thread.completed" || 
+               evt.Type == "item.completed" || 
+               evt.Type == "session_end" || 
+               evt.Type == "complete" || 
+               evt.Type == "step_finish" ||
+               evt.Type == "result";
     }
     
     private List<OutputEventGroup> ConvertToOutputEventGroups(List<JsonlEventGroup> jsonlGroups)

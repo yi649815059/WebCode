@@ -896,9 +896,10 @@ public partial class CodeAssistant : ComponentBase, IAsyncDisposable
         {
             Type = "turn.completed",
             Title = T("cliEvent.title.turnCompleted"),
+            // 当有 Usage 信息时，Content 设为空，只显示 Token 统计，避免与最后一条消息重复
             Content = usage is null
                 ? T("cliEvent.content.turnCompleted")
-                : T("cliEvent.content.turnCompletedWithUsage"),
+                : string.Empty,
             Usage = usage
         });
     }
@@ -1799,6 +1800,14 @@ public partial class CodeAssistant : ComponentBase, IAsyncDisposable
             return outputEvent.Usage is null
                 ? T("cliEvent.content.turnCompleted")
                 : T("cliEvent.content.turnCompletedWithUsage");
+        }
+
+        // result 类型事件与 turn.completed 类似，有 Usage 时不显示内容，避免重复
+        if (string.Equals(outputEvent.EventType, "result", StringComparison.OrdinalIgnoreCase))
+        {
+            return outputEvent.Usage is null
+                ? (fallbackContent ?? T("cliEvent.content.turnCompleted"))
+                : string.Empty;
         }
 
         if (string.Equals(outputEvent.EventType, "turn.started", StringComparison.OrdinalIgnoreCase))
@@ -3433,6 +3442,18 @@ public partial class CodeAssistant : ComponentBase, IAsyncDisposable
         return evt.Type == "tool_use" || evt.Type == "tool_result";
     }
 
+    private static bool IsCompletionEvent(JsonlDisplayItem evt)
+    {
+        // 判断是否为完成类型的事件（这些事件默认折叠起来）
+        return evt.Type == "turn.completed" || 
+               evt.Type == "thread.completed" || 
+               evt.Type == "item.completed" || 
+               evt.Type == "session_end" || 
+               evt.Type == "complete" || 
+               evt.Type == "step_finish" ||
+               evt.Type == "result";
+    }
+
     private List<JsonlEventGroup> GetJsonlEventGroups()
     {
         // 将“命令执行（Codex）”与“工具调用（Claude Code）”聚合为一个可折叠气泡
@@ -3551,7 +3572,22 @@ public partial class CodeAssistant : ComponentBase, IAsyncDisposable
                 continue;
             }
 
-            // 3) 其他事件：保持现状（单条卡片）
+            // 3) 完成类型事件：设置为可折叠（默认折叠）
+            if (IsCompletionEvent(evt))
+            {
+                groups.Add(new JsonlEventGroup
+                {
+                    Id = $"evt-{i}",
+                    Kind = "completion",
+                    IsCollapsible = true,
+                    IsCompleted = true,
+                    Title = evt.Title,
+                    Items = { evt }
+                });
+                continue;
+            }
+
+            // 4) 其他事件：保持现状（单条卡片）
             groups.Add(new JsonlEventGroup
             {
                 Id = $"evt-{i}",

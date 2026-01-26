@@ -58,22 +58,26 @@
                                 </div>
                                 <span class="text-xs text-gray-500 font-medium">@evt.Type</span>
                             </div>
-                            <div class="mt-2 text-sm text-gray-700 markdown-preview leading-relaxed overflow-hidden" style="word-break: break-all; overflow-wrap: break-word;">
-                                @if (evt.ItemType == "todo_list")
-                                {
-                                    @* 待办列表使用预格式化显示，确保换行 *@
-                                    <div style="white-space: pre-line;">@evt.Content</div>
-                                }
-                                else if (evt.ItemType == "user_question" && evt.UserQuestion != null)
-                                {
-                                    @* 用户问题展示 *@
-                                    <UserQuestionPanel UserQuestion="evt.UserQuestion" OnAnswerQuestion="OnAnswerQuestion" />
-                                }
-                                else
-                                {
-                                    @((MarkupString)RenderMarkdown(evt.Content))
-                                }
-                            </div>
+                            @* 对于执行完成类型的事件，如果有Usage信息则不显示Content，避免重复 *@
+                            @if (!IsCompletionEventWithUsage(evt))
+                            {
+                                <div class="mt-2 text-sm text-gray-700 markdown-preview leading-relaxed overflow-hidden" style="word-break: break-all; overflow-wrap: break-word;">
+                                    @if (evt.ItemType == "todo_list")
+                                    {
+                                        @* 待办列表使用预格式化显示，确保换行 *@
+                                        <div style="white-space: pre-line;">@evt.Content</div>
+                                    }
+                                    else if (evt.ItemType == "user_question" && evt.UserQuestion != null)
+                                    {
+                                        @* 用户问题展示 *@
+                                        <UserQuestionPanel UserQuestion="evt.UserQuestion" OnAnswerQuestion="OnAnswerQuestion" />
+                                    }
+                                    else
+                                    {
+                                        @((MarkupString)RenderMarkdown(evt.Content))
+                                    }
+                                </div>
+                            }
                             @if (evt.Usage != null)
                             {
                                 <div class="mt-4 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
@@ -186,22 +190,26 @@
                                                 </div>
                                                 <span class="text-xs text-gray-500 font-medium flex-shrink-0">@evt.Type</span>
                                             </div>
-                                            <div class="text-sm text-gray-700 markdown-preview leading-relaxed overflow-hidden" style="word-break: break-all; overflow-wrap: break-word;">
-                                                @if (evt.ItemType == "todo_list")
-                                                {
-                                                    @* 待办列表使用预格式化显示，确保换行 *@
-                                                    <div style="white-space: pre-line;">@evt.Content</div>
-                                                }
-                                                else if (evt.ItemType == "user_question" && evt.UserQuestion != null)
-                                                {
-                                                    @* 用户问题展示 *@
-                                                    <UserQuestionPanel UserQuestion="evt.UserQuestion" OnAnswerQuestion="OnAnswerQuestion" />
-                                                }
-                                                else
-                                                {
-                                                    @((MarkupString)RenderMarkdown(evt.Content))
-                                                }
-                                            </div>
+                                            @* 对于执行完成类型的事件，如果有Usage信息则不显示Content，避免重复 *@
+                                            @if (!IsCompletionEventWithUsage(evt))
+                                            {
+                                                <div class="text-sm text-gray-700 markdown-preview leading-relaxed overflow-hidden" style="word-break: break-all; overflow-wrap: break-word;">
+                                                    @if (evt.ItemType == "todo_list")
+                                                    {
+                                                        @* 待办列表使用预格式化显示，确保换行 *@
+                                                        <div style="white-space: pre-line;">@evt.Content</div>
+                                                    }
+                                                    else if (evt.ItemType == "user_question" && evt.UserQuestion != null)
+                                                    {
+                                                        @* 用户问题展示 *@
+                                                        <UserQuestionPanel UserQuestion="evt.UserQuestion" OnAnswerQuestion="OnAnswerQuestion" />
+                                                    }
+                                                    else
+                                                    {
+                                                        @((MarkupString)RenderMarkdown(evt.Content))
+                                                    }
+                                                </div>
+                                            }
                                             @if (evt.Usage != null)
                                             {
                                                 <div class="mt-4 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl px-4 py-3 shadow-sm">
@@ -429,6 +437,27 @@
     {
         if (!value.HasValue || value == 0) return "0";
         return value.Value.ToString("N0");
+    }
+
+    /// <summary>
+    /// 判断是否为带有Usage信息的完成类型事件
+    /// 这类事件不需要显示Content，只显示状态和Token消耗
+    /// </summary>
+    private bool IsCompletionEventWithUsage(OutputEvent evt)
+    {
+        // 如果没有Usage信息，则需要显示Content
+        if (evt.Usage == null) return false;
+        
+        // 检查是否为完成类型的事件
+        var isCompletionType = evt.Type == "turn.completed" || 
+                               evt.Type == "thread.completed" || 
+                               evt.Type == "item.completed" || 
+                               evt.Type == "session_end" || 
+                               evt.Type == "complete" || 
+                               evt.Type == "step_finish" ||
+                               evt.Type == "result";  // result 类型也属于完成事件
+        
+        return isCompletionType;
     }
 
     
