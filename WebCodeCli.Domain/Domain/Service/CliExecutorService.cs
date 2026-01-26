@@ -1400,7 +1400,7 @@ public class CliExecutorService : ICliExecutorService
     /// <summary>
     /// 初始化会话工作区（可选择关联项目）
     /// </summary>
-    public async Task<string> InitializeSessionWorkspaceAsync(string sessionId, string? projectId = null)
+    public async Task<string> InitializeSessionWorkspaceAsync(string sessionId, string? projectId = null, bool includeGit = false)
     {
         // 先创建基本工作区
         var workspacePath = GetOrCreateSessionWorkspace(sessionId);
@@ -1422,7 +1422,7 @@ public class CliExecutorService : ICliExecutorService
                     
                     if (workspaceIsEmpty)
                     {
-                        var (success, errorMessage) = await projectService.CopyProjectToWorkspaceAsync(projectId, workspacePath);
+                        var (success, errorMessage) = await projectService.CopyProjectToWorkspaceAsync(projectId, workspacePath, includeGit);
                         
                         if (success)
                         {

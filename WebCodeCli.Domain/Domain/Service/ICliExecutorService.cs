@@ -192,8 +192,9 @@ public interface ICliExecutorService
     /// </summary>
     /// <param name="sessionId">会话ID</param>
     /// <param name="projectId">项目ID（可选，如果提供则从项目复制代码）</param>
+    /// <param name="includeGit">是否包含 .git 目录</param>
     /// <returns>工作区路径</returns>
-    Task<string> InitializeSessionWorkspaceAsync(string sessionId, string? projectId = null);
+    Task<string> InitializeSessionWorkspaceAsync(string sessionId, string? projectId = null, bool includeGit = false);
     
     /// <summary>
     /// 刷新工作区根目录缓存（当数据库配置更新时调用）

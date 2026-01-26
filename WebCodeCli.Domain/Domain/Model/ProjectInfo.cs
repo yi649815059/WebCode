@@ -62,6 +62,11 @@ public class ProjectInfo
 }
 
 /// <summary>
+/// 项目选择结果（用于创建会话时的参数）
+/// </summary>
+public record ProjectSelectionResult(string? ProjectId, bool IncludeGit);
+
+/// <summary>
 /// 创建项目请求
 /// </summary>
 public class CreateProjectRequest

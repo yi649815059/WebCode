@@ -454,7 +454,7 @@ public class ProjectService : IProjectService
     /// <summary>
     /// 复制项目代码到会话工作区
     /// </summary>
-    public async Task<(bool Success, string? ErrorMessage)> CopyProjectToWorkspaceAsync(string projectId, string targetPath)
+    public async Task<(bool Success, string? ErrorMessage)> CopyProjectToWorkspaceAsync(string projectId, string targetPath, bool includeGit)
     {
         try
         {
@@ -482,8 +482,8 @@ public class ProjectService : IProjectService
                 Directory.CreateDirectory(targetPath);
             }
             
-            // 复制文件（排除 .git 目录）
-            await CopyDirectoryAsync(entity.LocalPath, targetPath, excludeGit: true);
+            // 复制文件（可选包含 .git 目录）
+            await CopyDirectoryAsync(entity.LocalPath, targetPath, excludeGit: !includeGit);
             
             _logger.LogInformation("项目代码已复制到工作区: {ProjectId} -> {TargetPath}", projectId, targetPath);
             return (true, null);

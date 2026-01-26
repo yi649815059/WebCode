@@ -59,5 +59,6 @@ public interface IProjectService
     /// </summary>
     /// <param name="projectId">项目ID</param>
     /// <param name="targetPath">目标工作区路径</param>
-    Task<(bool Success, string? ErrorMessage)> CopyProjectToWorkspaceAsync(string projectId, string targetPath);
+    /// <param name="includeGit">是否包含 .git 目录</param>
+    Task<(bool Success, string? ErrorMessage)> CopyProjectToWorkspaceAsync(string projectId, string targetPath, bool includeGit);
 }

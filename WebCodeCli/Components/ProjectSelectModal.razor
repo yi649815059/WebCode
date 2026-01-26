@@ -88,6 +88,20 @@
                             }
                         </div>
                         
+                        <!-- Git 选项 -->
+                        <div class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <label class="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox"
+                                       class="mt-0.5 rounded border-gray-300"
+                                       @bind="_includeGit"
+                                       disabled="@(_selectedProjectId == null)" />
+                                <span class="text-sm text-gray-700">保留 Git 信息（可在会话工作区直接提交）</span>
+                            </label>
+                            <p class="text-xs text-gray-500 mt-1 ml-6">
+                                不勾选将排除 .git，适合避免污染原项目历史
+                            </p>
+                        </div>
+
                         <!-- 操作按钮 -->
                         <div class="flex gap-3 mt-6">
                             <button @onclick="Cancel"
@@ -108,17 +122,19 @@
 
 @code {
     [Parameter]
-    public EventCallback<string?> OnProjectSelected { get; set; }
+    public EventCallback<ProjectSelectionResult> OnProjectSelected { get; set; }
 
     private bool _isVisible = false;
     private List<ProjectInfo> _projects = new();
     private bool _isLoading = false;
     private string? _selectedProjectId = null;
+    private bool _includeGit = false;
 
     public async Task ShowAsync()
     {
         _isVisible = true;
         _selectedProjectId = null;
+        _includeGit = false;
         StateHasChanged();
         
         await LoadProjects();
@@ -158,13 +174,18 @@
     private void SelectProject(string? projectId)
     {
         _selectedProjectId = projectId;
+        if (_selectedProjectId == null)
+        {
+            _includeGit = false;
+        }
         StateHasChanged();
     }
 
     private async Task Confirm()
     {
         Close();
-        await OnProjectSelected.InvokeAsync(_selectedProjectId);
+        var result = new ProjectSelectionResult(_selectedProjectId, _selectedProjectId != null && _includeGit);
+        await OnProjectSelected.InvokeAsync(result);
     }
 
     private void Cancel()

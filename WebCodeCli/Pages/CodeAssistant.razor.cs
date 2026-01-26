@@ -3723,7 +3723,7 @@ public partial class CodeAssistant : ComponentBase, IAsyncDisposable
     private async Task CreateNewSessionAsync()
     {
         // 直接创建空白会话，不显示项目选择
-        await CreateNewSessionWithProjectAsync(null);
+        await CreateNewSessionWithProjectAsync(null, includeGit: false);
     }
     
     /// <summary>
@@ -3749,16 +3749,16 @@ public partial class CodeAssistant : ComponentBase, IAsyncDisposable
     /// <summary>
     /// 处理项目选择结果
     /// </summary>
-    private async Task OnProjectSelected(string? projectId)
+    private async Task OnProjectSelected(ProjectSelectionResult selection)
     {
-        await CreateNewSessionWithProjectAsync(projectId);
+        await CreateNewSessionWithProjectAsync(selection.ProjectId, selection.IncludeGit);
         StateHasChanged();
     }
     
     /// <summary>
     /// 创建新会话（带项目关联）
     /// </summary>
-    private async Task CreateNewSessionWithProjectAsync(string? projectId)
+    private async Task CreateNewSessionWithProjectAsync(string? projectId, bool includeGit)
     {
         try
         {
@@ -3782,7 +3782,7 @@ public partial class CodeAssistant : ComponentBase, IAsyncDisposable
             _htmlPreviewUrl = string.Empty;
             
             // 创建新的工作区目录（如果有项目，从项目复制代码）
-            var workspacePath = await CliExecutorService.InitializeSessionWorkspaceAsync(_sessionId, projectId);
+            var workspacePath = await CliExecutorService.InitializeSessionWorkspaceAsync(_sessionId, projectId, includeGit);
             
             // 获取项目名称（如果有）
             string? projectName = null;
