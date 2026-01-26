@@ -45,6 +45,7 @@ public partial class CodeAssistant : ComponentBase, IAsyncDisposable
     [Inject] private IInputHistoryService InputHistoryService { get; set; } = default!;
     [Inject] private IUserContextService UserContextService { get; set; } = default!;
     [Inject] private HttpClient Http { get; set; } = default!;
+    [Inject] private IVersionService VersionService { get; set; } = default!;
     
     // 本地化翻译缓存
     private Dictionary<string, string> _translations = new();
@@ -170,6 +171,14 @@ public partial class CodeAssistant : ComponentBase, IAsyncDisposable
     
     // 项目选择模态框
     private ProjectSelectModal _projectSelectModal = default!;
+    
+    // 更新提示模态框
+    private UpdateNotificationModal _updateNotificationModal = default!;
+    
+    // 版本相关
+    private string _currentVersion = string.Empty;
+    private bool _hasUpdate = false;
+    private VersionCheckResult? _versionCheckResult;
     
     // 文件上传
     private bool _isUploading = false;
@@ -368,6 +377,48 @@ public partial class CodeAssistant : ComponentBase, IAsyncDisposable
         {
             await LoadWorkspaceFiles();
         }, null, TimeSpan.Zero, TimeSpan.FromSeconds(2));
+        
+        // 异步检查版本更新（不阻塞页面加载）
+        _ = CheckVersionUpdateAsync();
+    }
+    
+    /// <summary>
+    /// 异步检查版本更新
+    /// </summary>
+    private async Task CheckVersionUpdateAsync()
+    {
+        try
+        {
+            _currentVersion = VersionService.GetCurrentVersion();
+            
+            // 静默检查更新
+            _versionCheckResult = await VersionService.CheckForUpdateAsync();
+            _hasUpdate = _versionCheckResult?.HasUpdate ?? false;
+            
+            // 如果有更新，在控制台输出提示
+            if (_hasUpdate && _versionCheckResult != null)
+            {
+                Console.WriteLine($"[版本检查] 发现新版本: v{_versionCheckResult.LatestVersion} (当前: v{_currentVersion})");
+            }
+            
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[版本检查] 检查更新失败: {ex.Message}");
+            _currentVersion = VersionService.GetCurrentVersion();
+        }
+    }
+    
+    /// <summary>
+    /// 手动检查更新并显示模态框
+    /// </summary>
+    private async Task CheckForUpdate()
+    {
+        if (_updateNotificationModal != null)
+        {
+            await _updateNotificationModal.ShowAndCheckAsync(VersionService);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

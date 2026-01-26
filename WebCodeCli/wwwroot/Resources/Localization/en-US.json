@@ -116,6 +116,19 @@
     "stageExecute": "Executing",
     "stageComplete": "Completed"
   },
+  "version": {
+    "updateTitle": "Update Available",
+    "checking": "Checking for updates...",
+    "checkFailed": "Update check failed",
+    "current": "Current version",
+    "latest": "Latest version",
+    "publishedAt": "Published at",
+    "releaseNotes": "Release notes",
+    "remindLater": "Remind me later",
+    "viewUpdate": "View update",
+    "upToDate": "You're up to date",
+    "githubReleases": "GitHub Releases"
+  },
   "cliEvent": {
     "title": {
       "threadStarted": "Session started",

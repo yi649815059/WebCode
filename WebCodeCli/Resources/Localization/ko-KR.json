@@ -165,6 +165,19 @@
     "stageExecute": "실행 중",
     "stageComplete": "완료"
   },
+  "version": {
+    "updateTitle": "새 버전이 있습니다",
+    "checking": "업데이트를 확인하는 중...",
+    "checkFailed": "업데이트 확인에 실패했습니다",
+    "current": "현재 버전",
+    "latest": "최신 버전",
+    "publishedAt": "게시 일시",
+    "releaseNotes": "릴리스 노트",
+    "remindLater": "나중에 알림",
+    "viewUpdate": "업데이트 보기",
+    "upToDate": "최신 상태입니다",
+    "githubReleases": "GitHub 릴리스"
+  },
   "cliEvent": {
     "title": {
       "threadStarted": "스레드 시작",

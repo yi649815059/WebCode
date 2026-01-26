@@ -165,6 +165,19 @@
     "stageExecute": "実行中",
     "stageComplete": "完了"
   },
+  "version": {
+    "updateTitle": "新しいバージョンがあります",
+    "checking": "更新を確認しています...",
+    "checkFailed": "更新の確認に失敗しました",
+    "current": "現在のバージョン",
+    "latest": "最新バージョン",
+    "publishedAt": "公開日時",
+    "releaseNotes": "リリースノート",
+    "remindLater": "後で通知",
+    "viewUpdate": "更新を表示",
+    "upToDate": "最新の状態です",
+    "githubReleases": "GitHub リリース"
+  },
   "cliEvent": {
     "title": {
       "threadStarted": "スレッド開始",

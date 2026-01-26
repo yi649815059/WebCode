@@ -31,6 +31,7 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
     [Inject] private WebCodeCli.Domain.Domain.Service.ISkillService SkillService { get; set; } = default!;
     [Inject] private ISessionOutputService SessionOutputService { get; set; } = default!;
     [Inject] private IUserContextService UserContextService { get; set; } = default!;
+    [Inject] private IVersionService VersionService { get; set; } = default!;
     
     #endregion
     
@@ -2074,6 +2075,12 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
     private EnvironmentVariableConfigModal _envConfigModal = default!;
     private ProgressTracker _progressTracker = default!;
     private QuickActionsPanel _quickActionsPanel = default!;
+    private UpdateNotificationModal _updateNotificationModal = default!;
+    
+    // 版本相关
+    private string _currentVersion = string.Empty;
+    private bool _hasUpdate = false;
+    private VersionCheckResult? _versionCheckResult;
 
     // 设置页选择器
     private bool _showToolPicker = false;
@@ -2280,6 +2287,48 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
             {
                 await LoadSessionFromDrawer(latestSession.SessionId);
             }
+        }
+        
+        // 异步检查版本更新（不阻塞页面加载）
+        _ = CheckVersionUpdateAsync();
+    }
+    
+    /// <summary>
+    /// 异步检查版本更新
+    /// </summary>
+    private async Task CheckVersionUpdateAsync()
+    {
+        try
+        {
+            _currentVersion = VersionService.GetCurrentVersion();
+            
+            // 静默检查更新
+            _versionCheckResult = await VersionService.CheckForUpdateAsync();
+            _hasUpdate = _versionCheckResult?.HasUpdate ?? false;
+            
+            // 如果有更新，在控制台输出提示
+            if (_hasUpdate && _versionCheckResult != null)
+            {
+                Console.WriteLine($"[版本检查] 发现新版本: v{_versionCheckResult.LatestVersion} (当前: v{_currentVersion})");
+            }
+            
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[版本检查] 检查更新失败: {ex.Message}");
+            _currentVersion = VersionService.GetCurrentVersion();
+        }
+    }
+    
+    /// <summary>
+    /// 手动检查更新并显示模态框
+    /// </summary>
+    private async Task CheckForUpdate()
+    {
+        if (_updateNotificationModal != null)
+        {
+            await _updateNotificationModal.ShowAndCheckAsync(VersionService);
         }
     }
     

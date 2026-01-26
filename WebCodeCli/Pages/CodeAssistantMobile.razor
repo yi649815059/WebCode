@@ -218,6 +218,9 @@
 <!-- 环境变量配置模态框 -->
 <EnvironmentVariableConfigModal @ref="_envConfigModal" />
 
+<!-- 更新提示模态框 -->
+<UpdateNotificationModal @ref="_updateNotificationModal" />
+
 <!-- 文件操作菜单 -->
 @if (_showFileActionSheet && _selectedFileNode != null)
 {
@@ -797,8 +800,22 @@
                 }
                 
                 <!-- 版本信息 -->
-                <div class="text-center py-4 text-xs text-gray-400">
-                    <p>WebCode Mobile</p>
+                <div class="text-center py-4">
+                    <button @onclick="CheckForUpdate" 
+                            class="text-xs text-gray-400 hover:text-gray-600 transition-colors flex flex-col items-center gap-1 mx-auto">
+                        <div class="flex items-center gap-1.5">
+                            <span>WebCode Mobile</span>
+                            <span class="font-mono font-medium">v@_currentVersion</span>
+                            @if (_hasUpdate)
+                            {
+                                <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                            }
+                        </div>
+                        @if (_hasUpdate)
+                        {
+                            <span class="text-blue-500 text-[10px]">@T("version.newVersionAvailable")</span>
+                        }
+                    </button>
                 </div>
             </div>
         </div>

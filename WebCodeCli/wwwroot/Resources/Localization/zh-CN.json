@@ -116,6 +116,19 @@
     "stageExecute": "执行中",
     "stageComplete": "完成"
   },
+  "version": {
+    "updateTitle": "发现新版本",
+    "checking": "正在检查更新...",
+    "checkFailed": "检查更新失败",
+    "current": "当前版本",
+    "latest": "最新版本",
+    "publishedAt": "发布时间",
+    "releaseNotes": "更新日志",
+    "remindLater": "稍后提醒",
+    "viewUpdate": "查看更新",
+    "upToDate": "已是最新版本",
+    "githubReleases": "GitHub 发布页"
+  },
   "cliEvent": {
     "title": {
       "threadStarted": "会话已启动",
