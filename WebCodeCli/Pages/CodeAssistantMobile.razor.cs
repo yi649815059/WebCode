@@ -2211,6 +2211,8 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
     // PWA 安装相关
     private bool _showPwaInstallPrompt = false;
     private bool _isPwaInstalled = false;
+    private bool _isIosDevice = false;
+    private bool _showIosPwaGuide = false;
     
     /// <summary>
     /// 检查 PWA 安装状态
@@ -2219,6 +2221,10 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
     {
         try
         {
+            // 检测是否是 iOS 设备
+            _isIosDevice = await JSRuntime.InvokeAsync<bool>("eval", 
+                "/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream");
+            
             // 检查是否已以独立模式运行（已安装）
             _isPwaInstalled = await JSRuntime.InvokeAsync<bool>("eval", 
                 "window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true");
@@ -2226,23 +2232,36 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
             if (_isPwaInstalled)
             {
                 _showPwaInstallPrompt = false;
+                _showIosPwaGuide = false;
                 return;
             }
             
-            // 检查是否有延迟的安装提示
-            var hasInstallPrompt = await JSRuntime.InvokeAsync<bool>("eval", 
-                "window.PWA && window.PWA.state && window.PWA.state.deferredPrompt !== null");
-            
-            _showPwaInstallPrompt = hasInstallPrompt;
+            if (_isIosDevice)
+            {
+                // iOS: 检查是否已经关闭过引导提示
+                var dismissed = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "pwa-ios-guide-dismissed");
+                _showIosPwaGuide = dismissed != "true";
+                _showPwaInstallPrompt = false;
+            }
+            else
+            {
+                // Android/其他: 检查是否有延迟的安装提示
+                var hasInstallPrompt = await JSRuntime.InvokeAsync<bool>("eval", 
+                    "window.PWA && window.PWA.state && window.PWA.state.deferredPrompt !== null");
+                
+                _showPwaInstallPrompt = hasInstallPrompt;
+                _showIosPwaGuide = false;
+            }
         }
         catch
         {
             _showPwaInstallPrompt = false;
+            _showIosPwaGuide = false;
         }
     }
     
     /// <summary>
-    /// 触发 PWA 安装
+    /// 触发 PWA 安装 (Android)
     /// </summary>
     private async Task TriggerPwaInstall()
     {
@@ -2262,6 +2281,20 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
         {
             Console.WriteLine($"[PWA] 安装失败: {ex.Message}");
         }
+    }
+    
+    /// <summary>
+    /// 关闭 iOS PWA 引导提示
+    /// </summary>
+    private async Task DismissIosPwaGuide()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "pwa-ios-guide-dismissed", "true");
+            _showIosPwaGuide = false;
+            StateHasChanged();
+        }
+        catch { }
     }
     
     private async Task OpenEnvConfig()
