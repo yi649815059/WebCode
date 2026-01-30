@@ -37,8 +37,9 @@
 
     <div class="flex items-end gap-2 sm:gap-3 relative">
         <div class="flex-1 relative">
-            <textarea value="@InputMessage"
-                      @oninput="HandleInput"
+            <textarea @bind-value="InputMessage"
+                      @bind-value:event="oninput"
+                      @bind-value:after="HandleInputAfterBind"
                       @onkeydown="HandleKeyDownInternal"
                       @onkeydown:preventDefault="@(PreventDefaultOnEnter && !_isComposing)"
                       data-skill-tab-enabled="@(ShowSkillPicker && FilteredSkills.Any())"
@@ -213,16 +214,14 @@
         _dotNetRef?.Dispose();
     }
 
-    private async Task HandleInput(ChangeEventArgs args)
+    private async Task HandleInputAfterBind()
     {
         // 组合期间（中文输入法候选阶段）不触发更新，避免闪烁
         if (_isComposing)
         {
             return;
         }
-        
-        var value = args.Value?.ToString() ?? string.Empty;
-        await InputMessageChanged.InvokeAsync(value);
+
         await OnAfterInput.InvokeAsync();
     }
 
