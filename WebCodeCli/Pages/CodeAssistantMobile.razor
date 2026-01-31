@@ -671,7 +671,7 @@
                     <InputFile OnChange="HandleFileUpload" disabled="@_isUploading" class="hidden" />
                 </label>
                 <button @onclick="OpenPreviewTab"
-                        class="px-3 py-2 text-xs font-medium text-white bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-lg flex items-center gap-1.5 transition-colors">
+                        class="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-lg flex items-center gap-1.5 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
                     </svg>
@@ -847,7 +847,7 @@
                     @T("codeAssistant.backToFiles")
                 </button>
                 <div class="flex-1"></div>
-                <span class="text-xs font-medium text-purple-600">@T("codeAssistant.frontendProjectPreview")</span>
+                <span class="text-xs font-medium text-gray-700">@T("codeAssistant.frontendProjectPreview")</span>
             </div>
             
             <!-- 使用 HtmlPreviewPanel 组件 -->
