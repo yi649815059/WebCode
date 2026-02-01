@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using WebCodeCli.Domain.Common.Extensions;
@@ -139,6 +140,142 @@ public class ProjectService : IProjectService
         {
             _logger.LogError(ex, "创建项目失败");
             return (null, $"创建项目失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 从 ZIP 压缩包创建项目
+    /// </summary>
+    public async Task<(ProjectInfo? Project, string? ErrorMessage)> CreateProjectFromZipAsync(string projectName, byte[] zipFileContent)
+    {
+        var tempPath = string.Empty;
+        
+        try
+        {
+            var username = _userContextService.GetCurrentUsername();
+            
+            // 验证项目名称
+            if (string.IsNullOrWhiteSpace(projectName))
+            {
+                return (null, "项目名称不能为空");
+            }
+            
+            // 验证 ZIP 文件内容
+            if (zipFileContent == null || zipFileContent.Length == 0)
+            {
+                return (null, "ZIP 文件内容为空");
+            }
+            
+            // 检查名称是否已存在
+            if (await _projectRepository.ExistsByNameAndUsernameAsync(projectName, username))
+            {
+                return (null, "项目名称已存在");
+            }
+            
+            // 生成项目ID和本地路径
+            var projectId = Guid.NewGuid().ToString("N");
+            var localPath = await GetProjectLocalPathAsync(username, projectId);
+            
+            // 创建临时解压目录
+            tempPath = Path.Combine(Path.GetTempPath(), $"webcode_zip_{projectId}");
+            
+            // 确保临时目录存在
+            if (Directory.Exists(tempPath))
+            {
+                Directory.Delete(tempPath, true);
+            }
+            Directory.CreateDirectory(tempPath);
+            
+            // 解压到临时目录
+            using (var zipStream = new MemoryStream(zipFileContent))
+            {
+                using var archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
+                archive.ExtractToDirectory(tempPath);
+            }
+            
+            // 检查是否只有一个根目录，如果是则提升内容
+            var rootItems = Directory.GetFileSystemEntries(tempPath);
+            if (rootItems.Length == 1 && Directory.Exists(rootItems[0]))
+            {
+                // 只有一个根目录，需要提升内容
+                var singleRootDir = rootItems[0];
+                
+                // 确保目标父目录存在
+                var parentDir = Path.GetDirectoryName(localPath);
+                if (!string.IsNullOrEmpty(parentDir) && !Directory.Exists(parentDir))
+                {
+                    Directory.CreateDirectory(parentDir);
+                }
+                
+                // 移动单一根目录到目标路径
+                Directory.Move(singleRootDir, localPath);
+            }
+            else
+            {
+                // 多个文件/目录，直接移动整个临时目录
+                var parentDir = Path.GetDirectoryName(localPath);
+                if (!string.IsNullOrEmpty(parentDir) && !Directory.Exists(parentDir))
+                {
+                    Directory.CreateDirectory(parentDir);
+                }
+                
+                Directory.Move(tempPath, localPath);
+                tempPath = string.Empty; // 已移动，不需要清理
+            }
+            
+            // 创建实体（ZIP 上传的项目 GitUrl 设为特殊标记）
+            var entity = new ProjectEntity
+            {
+                ProjectId = projectId,
+                Username = username,
+                Name = projectName.Trim(),
+                GitUrl = string.Empty, // ZIP 上传项目无 Git URL
+                AuthType = "none",
+                Branch = string.Empty,
+                LocalPath = localPath,
+                Status = "ready", // ZIP 上传后直接就绪
+                LastSyncAt = DateTime.Now,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
+            
+            var success = await _projectRepository.InsertAsync(entity);
+            if (!success)
+            {
+                // 回滚：删除已解压的目录
+                if (Directory.Exists(localPath))
+                {
+                    Directory.Delete(localPath, true);
+                }
+                return (null, "保存项目失败");
+            }
+            
+            _logger.LogInformation("ZIP 项目创建成功: {ProjectId}, {Name}", projectId, projectName);
+            return (MapToProjectInfo(entity), null);
+        }
+        catch (InvalidDataException)
+        {
+            return (null, "无效的 ZIP 文件格式");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "从 ZIP 创建项目失败");
+            return (null, $"创建项目失败: {ex.Message}");
+        }
+        finally
+        {
+            // 清理临时目录
+            if (!string.IsNullOrEmpty(tempPath) && Directory.Exists(tempPath))
+            {
+                try
+                {
+                    Directory.Delete(tempPath, true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "清理临时目录失败: {TempPath}", tempPath);
+                }
+            }
         }
     }
 
