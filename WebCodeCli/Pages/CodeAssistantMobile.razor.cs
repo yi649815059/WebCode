@@ -1935,6 +1935,8 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
     private bool _showCreateFolderDialog = false;
     private string _newFolderName = string.Empty;
     private bool _isCreatingFolder = false;
+    private bool _isComposingFolderName = false;
+    private DotNetObjectReference<CodeAssistantMobile>? _createFolderDotNetRef;
     
     // 文件上传
     private bool _isUploading = false;
@@ -2183,12 +2185,71 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
     {
         _newFolderName = string.Empty;
         _showCreateFolderDialog = true;
+        
+        // 设置组合事件监听
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(100); // 等待DOM渲染
+            try
+            {
+                _createFolderDotNetRef = DotNetObjectReference.Create(this);
+                await JSRuntime.InvokeVoidAsync("setupCompositionEvents", "mobile-create-folder-input", _createFolderDotNetRef);
+            }
+            catch
+            {
+                // 忽略JS互操作错误
+            }
+        });
     }
     
     private void CloseCreateFolderDialog()
     {
         _showCreateFolderDialog = false;
         _newFolderName = string.Empty;
+        
+        // 清理组合事件监听
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("disposeCompositionEvents", "mobile-create-folder-input");
+            }
+            catch
+            {
+                // 忽略JS互操作错误
+            }
+        });
+    }
+    
+    [JSInvokable]
+    public void OnCompositionStart()
+    {
+        _isComposingFolderName = true;
+    }
+
+    [JSInvokable]
+    public Task OnCompositionEnd(string finalValue)
+    {
+        _isComposingFolderName = false;
+        // 组合结束时同步最终值
+        if (finalValue != _newFolderName)
+        {
+            _newFolderName = finalValue;
+            StateHasChanged();
+        }
+        return Task.CompletedTask;
+    }
+
+    private Task HandleNewFolderNameAfterBind()
+    {
+        // 组合期间（中文输入法候选阶段）不触发更新，避免闪烁
+        if (_isComposingFolderName)
+        {
+            return Task.CompletedTask;
+        }
+        
+        StateHasChanged();
+        return Task.CompletedTask;
     }
     
     private async Task CreateFolder()
@@ -2954,6 +3015,7 @@ public partial class CodeAssistantMobile : ComponentBase, IAsyncDisposable
         _disposed = true;
         _outputStateSaveTimer?.Dispose();
         // 清理资源
+        _createFolderDotNetRef?.Dispose();
     }
     
     #endregion

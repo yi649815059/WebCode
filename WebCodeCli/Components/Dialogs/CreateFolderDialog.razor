@@ -1,4 +1,6 @@
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
 
 @if (Show)
 {
@@ -32,9 +34,12 @@
 
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">@FolderNameLabel</label>
-                <input value="@FolderName"
-                       @oninput="HandleFolderNameInput"
-                       @onkeydown="OnKeyDown"
+                <input @bind-value="FolderName"
+                       @bind-value:event="oninput"
+                       @bind-value:after="HandleFolderNameInputAfterBind"
+                       @onkeydown="HandleKeyDownInternal"
+                       @onkeydown:preventDefault="@(ShouldPreventDefault())"
+                       id="create-folder-input"
                        type="text"
                        placeholder="@FolderNamePlaceholder"
                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-sm bg-white shadow-sm"
@@ -84,9 +89,74 @@
     [Parameter] public EventCallback<KeyboardEventArgs> OnKeyDown { get; set; }
     [Parameter] public EventCallback<string> FolderNameChanged { get; set; }
 
-    private Task HandleFolderNameInput(ChangeEventArgs args)
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    private bool _isComposing;
+    private DotNetObjectReference<CreateFolderDialog>? _dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var value = args.Value?.ToString() ?? string.Empty;
-        return FolderNameChanged.InvokeAsync(value);
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("setupCompositionEvents", "create-folder-input", _dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public void OnCompositionStart()
+    {
+        _isComposing = true;
+    }
+
+    [JSInvokable]
+    public async Task OnCompositionEnd(string finalValue)
+    {
+        _isComposing = false;
+        // 组合结束时同步最终值
+        if (finalValue != FolderName)
+        {
+            await FolderNameChanged.InvokeAsync(finalValue);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("disposeCompositionEvents", "create-folder-input");
+        }
+        catch
+        {
+            // 忽略释放阶段的 JS 错误
+        }
+        _dotNetRef?.Dispose();
+    }
+
+    private async Task HandleFolderNameInputAfterBind()
+    {
+        // 组合期间（中文输入法候选阶段）不触发更新，避免闪烁
+        if (_isComposing)
+        {
+            return;
+        }
+
+        await FolderNameChanged.InvokeAsync(FolderName);
+    }
+
+    private Task HandleKeyDownInternal(KeyboardEventArgs args)
+    {
+        if (_isComposing)
+        {
+            return Task.CompletedTask;
+        }
+
+        return OnKeyDown.InvokeAsync(args);
+    }
+
+    private bool ShouldPreventDefault()
+    {
+        // 只在非组合期间才阻止默认行为
+        return !_isComposing;
     }
 }
